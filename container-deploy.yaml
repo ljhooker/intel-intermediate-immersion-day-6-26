@@ -41,9 +41,9 @@ spec:
           - name: EMBEDDING_URL_PATH
             value: "/v1/embeddings"
           - name: SIMILARITY_TOP_K
-            value: "5"
+            value: "10"
           - name: SIMILARITY_VALUE
-            value: "0.45"
+            value: "0.25"
           - name: TIKTOKEN_CACHE_DIR
             value: "/home/worker/app/tiktoken_cache"
           - name: TRANSFORMERS_CACHE
