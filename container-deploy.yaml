@@ -1,0 +1,91 @@
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: privategpt-gitlab-pull-secret
+  namespace: pedemo-yuiv-user0
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRsYWIuY29tIjp7InVzZXJuYW1lIjoiaW50ZWwtaW50ZXJtZWRpYXRlLWlkLWRlcGxveSIsInBhc3N3b3JkIjoiZ2xkdC1rdnNoaGpHVzc4R25Ram1YY0czMiIsImF1dGgiOiJhVzUwWld3dGFXNTBaWEp0WldScFlYUmxMV2xrTFdSbGNHeHZlVHBuYkdSMExXdDJjMmhvYWtkWE56aEhibEZxYlZoalJ6TXkifX19
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+name: privategpt-app
+namespace: pedemo-yuiv-user0
+spec:
+replicas: 1
+selector:
+  matchLabels:
+  app: privategpt
+template:
+  metadata:
+  labels:
+    app: privategpt
+  spec:
+  terminationGracePeriodSeconds: 10
+  containers:
+  - name: privategpt
+    image: registry.gitlab.com/ignw1/dvs-code/cid/intel-ai-intermediate-immersion-day/privategpt:1.0
+    imagePullPolicy: Always
+    env:
+    - name: LLM_URL
+      value: "https://sharedmistral.pedemo-5cnv-user0.svc.cluster.local"
+    - name: LLM_MODEL
+      value: "sharedmistral"
+    - name: EMBEDDING_URL
+      value: "https://bge-embedding.pedemo-5cnv-user0.svc.cluster.local"
+    - name: EMBEDDING_MODEL
+      value: "bge-embedding"
+    - name: EMBEDDING_URL_PATH
+      value: "/v1/embeddings"
+    - name: SIMILARITY_TOP_K
+      value: "10"
+    - name: SIMILARITY_VALUE
+      value: "0.05"
+    - name: TIKTOKEN_CACHE_DIR
+      value: "/home/worker/app/tiktoken_cache"
+    - name: TRANSFORMERS_CACHE
+      value: "/home/worker/app/models"
+    - name: HF_TOKEN
+      value: "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"
+    resources:
+    requests:
+      cpu: 200m
+      memory: 128Mi
+    limits:
+      cpu: 800m
+      memory: 2048Mi
+  imagePullSecrets:
+    - name: privategpt-gitlab-pull-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: privategpt-service
+  namespace: pedemo-yuiv-user0
+spec:
+  type: ClusterIP
+  selector:
+    app: privategpt
+  ports:
+    - port: 80
+      targetPort: 8080
+
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: privategpt
+  namespace: pedemo-yuiv-user0
+spec:
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  to:
+    kind: Service
+    name: privategpt-service
+    weight: 100
+  wildcardPolicy: None
