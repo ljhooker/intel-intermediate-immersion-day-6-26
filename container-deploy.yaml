@@ -52,7 +52,7 @@ spec:
             value: "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"
         resources:
           requests:
-            cpu: 200m
+            cpu: 400m
             memory: 128Mi
           limits:
             cpu: 800m
